@@ -191,7 +191,7 @@ class iMessageEmailAlert:
 
     def _shorten_url(self, line: str) -> str:
         # Do the URL shortening
-        match_result = http_match.match(line)
+        match_result = self.http_match.match(line)
         if match_result is not None:
             results = []
             if match_result.group(0) != "":
