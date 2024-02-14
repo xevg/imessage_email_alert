@@ -3,6 +3,7 @@ import sys
 import time
 from pathlib import Path
 from typing import Optional
+import re
 
 from .get_email_message import GetEmailMessage, DeleteError
 from .send_imessage import SendImessage
@@ -12,7 +13,7 @@ ic.configureOutput(includeContext=True)
 
 
 class iMessageEmailAlert:
-    message_length = 1000  # The maximum message length to send
+    message_length = 800  # The maximum message length to send
 
     def __init__(
         self,
@@ -68,6 +69,7 @@ class iMessageEmailAlert:
                 ic(error_string)
                 time.sleep(60 * 10)  # 10 minutes so I don't flood the texts overnight
 
+        http_match = re.compile("(.*)(http[s]*://[^?]*)\?[\S]*(.*)$")
         while True:
             try:
                 message = self.gmail.get_next_message()
@@ -90,7 +92,15 @@ class iMessageEmailAlert:
                         line = line.strip()
                         if line != "":
                             new_text.append(line)
-
+                        match_result = http_match.match(line)
+                        if match_result is not None:
+                            results = []
+                            if match_result.group(0) != "":
+                                results.append(match_result.group(1))
+                            results.append(match_result.group(2))
+                            if match_result.group(3) != "":
+                                results.append(match_result.group(3))
+                            line = "".join(results)
                     text = "\n\n".join(new_text)
                     """
                     while "\n\n" in text:  # Get rid of multiple carriage returns
