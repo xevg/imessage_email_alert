@@ -2,6 +2,7 @@ import logging
 import re
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -62,7 +63,10 @@ class iMessageEmailAlert:
         self.logger.setLevel(logging.INFO)
         logging.Formatter(log_format, datefmt=date_format)
 
-        if self.log_dir is not None:
+        if self.log_dir is None:
+            self.log_dir = Path.home() / "logs"
+        try:
+            self.log_dir.mkdir(parents=True, exist_ok=True)
             file_handler = logging.FileHandler(
                 f"{self.log_dir / app_name}.log", mode="a"
             )
@@ -70,6 +74,8 @@ class iMessageEmailAlert:
                 logging.Formatter(log_format, datefmt=date_format)
             )
             self.logger.addHandler(file_handler)
+        except Exception as exp:
+            ic(f"Error setting up logfile: {exp}")
 
         if self.debug:
             stdout_handler = logging.StreamHandler(sys.stdout)
