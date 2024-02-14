@@ -9,7 +9,10 @@ from .get_email_message import GetEmailMessage, DeleteError
 from .send_imessage import SendImessage
 from icecream import ic
 
-ic.configureOutput(includeContext=True)
+ic.configureOutput(
+    includeContext=True,
+    prefix=f'imessage_email_alert - {datetime.now().strftime("%Y-%m-%d %I:%M:%S %p")}',
+)
 
 
 class iMessageEmailAlert:
