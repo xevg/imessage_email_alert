@@ -1,4 +1,5 @@
 import logging
+import pickle
 import re
 import sys
 import time
@@ -8,7 +9,7 @@ from typing import Optional
 
 from icecream import ic
 
-from .get_email_message import GetEmailMessage
+from .get_email_message import GetEmailMessage, EmailMessage
 from .send_imessage import SendImessage
 
 
@@ -31,6 +32,7 @@ class iMessageEmailAlert:
         log_dir: Path = None,
         debug: bool = False,
         save_messages: Path = None,
+        test_messages: Path = None,
     ):
         """
         :param phone_number: The phone number or email address of the iMessage
@@ -45,7 +47,8 @@ class iMessageEmailAlert:
         self.token_file = token_file
         self.log_dir = log_dir
         self.debug = debug
-        self.save_messages = save_messages
+        self.save_message_dir = save_messages
+        self.test_message_dir = test_messages
 
         # The URLs in email messages have a lot of extraneous tracking stuff. For the
         # iMessage, I don't really care about those, so just shorten it to the main
@@ -128,43 +131,15 @@ class iMessageEmailAlert:
                 continue
 
             if message:
-                if self.save_messages is not None:
-                    filename = self.save_messages / f"{str(datetime.now())}"
-                    with filename.open("w") as save_file:
-                        save_file.write(message.body)
+                if self.save_message_dir is not None:
+                    filename = (
+                        self.save_message_dir
+                        / f"{str(datetime.now().strftime('%Y%m%d%H%M%S'))}"
+                    )
+                    filename.write_bytes(pickle.dumps(message))
 
                 try:
-                    # Massage message to the format I want
-                    text = message.body
-                    text = text.replace("\r\n", "\n")
-                    text = self._remove_unwanted_characters(text)
-                    new_text = []
-                    for line in text.split("\n"):
-                        line = line.strip()
-                        if line != "":
-                            new_text.append(line)
-
-                        line = self._shorten_url(line)
-
-                    text = "\n\n".join(new_text)
-
-                    # Messages can be longer than I want on an iMessage, so shorten
-                    # it to an appropriate length
-                    if (
-                        len(text) > self.message_length
-                    ):  # Shorten the message to fit into a text
-                        text = f"{text[:self.message_length]}\n\n........"
-
-                    message_text = (
-                        f"To: {message.to_email}\nSubject: "
-                        f"{message.subject}\n\n{text}"
-                    )
-
-                    # send the message
-                    self.imessage.send_message(message_text)
-                    self.logger.info(
-                        f"Message sent to {message.to_email}: " f"{message.subject}"
-                    )
+                    self._process_message(message)
                 except Exception as error:
                     # If an error occurs, sleep for bit to see if it clears up,
                     # but don't bother trying to resend it
@@ -191,6 +166,13 @@ class iMessageEmailAlert:
 
             time.sleep(10)
 
+    def test_messages(self):
+        files = [i for i in self.test_message_dir.iterdir() if i.is_file()]
+        for file in files:
+            message_bytes = file.read_bytes()
+            message: EmailMessage = pickle.loads(message_bytes)
+            self._process_message(message)
+
     def _remove_unwanted_characters(self, text: str) -> str:
         for unicode_char in ["\u200c", "&#847;", "&zwnj;", "&nbsp;"]:
             text = text.replace(unicode_char, "")
@@ -201,10 +183,37 @@ class iMessageEmailAlert:
         match_result = self.http_match.match(line)
         if match_result is not None:
             results = []
-            if match_result.group(0) != "":
+            if match_result.group(1) != "":
                 results.append(match_result.group(1))
             results.append(match_result.group(2))
             if match_result.group(3) != "":
                 results.append(match_result.group(3))
             line = "".join(results)
         return line
+
+    def _process_message(self, message: EmailMessage) -> EmailMessage:
+        # Massage message to the format I want
+        text = message.body
+        text = text.replace("\r\n", "\n")
+        text = self._remove_unwanted_characters(text)
+        new_text = []
+        for line in text.split("\n"):
+            line = line.strip()
+            if line != "":
+                line = self._shorten_url(line)
+                new_text.append(line)
+
+        text = "\n\n".join(new_text)
+
+        # Messages can be longer than I want on an iMessage, so shorten
+        # it to an appropriate length
+        if len(text) > self.message_length:  # Shorten the message to fit into a text
+            text = f"{text[:self.message_length]}\n\n........"
+
+        message_text = (
+            f"To: {message.to_email}\nSubject: " f"{message.subject}\n\n{text}"
+        )
+
+        # send the message
+        self.imessage.send_message(message_text)
+        self.logger.info(f"Message sent to {message.to_email}: " f"{message.subject}")
