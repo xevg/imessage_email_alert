@@ -30,6 +30,7 @@ class iMessageEmailAlert:
         token_file: str = None,
         log_dir: Path = None,
         debug: bool = False,
+        save_messages: Path = None,
     ):
         """
         :param phone_number: The phone number or email address of the iMessage
@@ -44,6 +45,7 @@ class iMessageEmailAlert:
         self.token_file = token_file
         self.log_dir = log_dir
         self.debug = debug
+        self.save_messages = save_messages
 
         # The URLs in email messages have a lot of extraneous tracking stuff. For the
         # iMessage, I don't really care about those, so just shorten it to the main
@@ -126,6 +128,11 @@ class iMessageEmailAlert:
                 continue
 
             if message:
+                if self.save_messages is not None:
+                    filename = self.save_messages / f"{str(datetime.now())}"
+                    with filename.open("w") as save_file:
+                        save_file.write(message.body)
+
                 try:
                     # Massage message to the format I want
                     text = message.body

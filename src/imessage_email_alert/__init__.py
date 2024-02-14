@@ -49,11 +49,22 @@ def process_messages(
 @click.option(
     "--debug/--no-debug", default=False, help="Enable debugging to the console"
 )
-def imessage_email_alert(buddy, credentials_file, token_file, log_dir, debug):
+@click.option(
+    "--save_messages",
+    required=False,
+    type=click.Path(exists=True),
+    help="Directory to save original email messages to",
+)
+def imessage_email_alert(
+    buddy, credentials_file, token_file, log_dir, debug, save_messages
+):
     """Sends an iMessage alert to BUDDY (phone number or email) whenever you get an
     email"""
     if log_dir is not None:
         log_dir = Path(log_dir)
+
+    if save_messages is not None:
+        save_messages = Path(save_messages)
 
     imessage = iMessageEmailAlert(
         buddy,
@@ -61,6 +72,7 @@ def imessage_email_alert(buddy, credentials_file, token_file, log_dir, debug):
         token_file=token_file,
         log_dir=log_dir,
         debug=debug,
+        save_messages=save_messages,
     )
     imessage.process_messages()
 
