@@ -45,6 +45,11 @@ class iMessageEmailAlert:
         self.log_dir = log_dir
         self.debug = debug
 
+        # The URLs in email messages have a lot of extraneous tracking stuff. For the
+        # iMessage, I don't really care about those, so just shorten it to the main
+        # part of the URL
+        self.http_match = re.compile("(.*)(http[s]*://[^?]*)\?[\S]*(.*)$")
+
         self.gmail: Optional[GetEmailMessage] = None
         self.imessage = SendImessage(self.phone_number)
 
@@ -105,11 +110,6 @@ class iMessageEmailAlert:
                 ic(error_string)
                 time.sleep(60 * 10)  # 10 minutes so I don't flood the texts overnight
 
-        # The URLs in email messages have a lot of extraneous tracking stuff. For the
-        # iMessage, I don't really care about those, so just shorten it to the main
-        # part of the URL
-        http_match = re.compile("(.*)(http[s]*://[^?]*)\?[\S]*(.*)$")
-
         # Once I have the gmail connection successfully, start grabbing messages and
         # processing them.
 
@@ -130,23 +130,14 @@ class iMessageEmailAlert:
                     # Massage message to the format I want
                     text = message.body
                     text = text.replace("\r\n", "\n")
-                    text = text.replace("\u200c", "")
+                    text = self._remove_unwanted_characters(text)
                     new_text = []
                     for line in text.split("\n"):
                         line = line.strip()
                         if line != "":
                             new_text.append(line)
 
-                        # Do the URL shortening
-                        match_result = http_match.match(line)
-                        if match_result is not None:
-                            results = []
-                            if match_result.group(0) != "":
-                                results.append(match_result.group(1))
-                            results.append(match_result.group(2))
-                            if match_result.group(3) != "":
-                                results.append(match_result.group(3))
-                            line = "".join(results)
+                        line = self._shorten_url(line)
 
                     text = "\n\n".join(new_text)
 
@@ -192,3 +183,21 @@ class iMessageEmailAlert:
                     ic(error_string)
 
             time.sleep(10)
+
+    def _remove_unwanted_characters(self, line: str) -> str:
+        for unicode_char in ["\u200c", "&#847;", "&zwnj;", "&nbsp;"]:
+            text = text.replace(unicode_char, "")
+        return text
+
+    def _shorten_url(self, line: str) -> str:
+        # Do the URL shortening
+        match_result = http_match.match(line)
+        if match_result is not None:
+            results = []
+            if match_result.group(0) != "":
+                results.append(match_result.group(1))
+            results.append(match_result.group(2))
+            if match_result.group(3) != "":
+                results.append(match_result.group(3))
+            line = "".join(results)
+        return line
