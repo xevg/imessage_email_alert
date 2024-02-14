@@ -184,7 +184,7 @@ class iMessageEmailAlert:
 
             time.sleep(10)
 
-    def _remove_unwanted_characters(self, line: str) -> str:
+    def _remove_unwanted_characters(self, text: str) -> str:
         for unicode_char in ["\u200c", "&#847;", "&zwnj;", "&nbsp;"]:
             text = text.replace(unicode_char, "")
         return text
