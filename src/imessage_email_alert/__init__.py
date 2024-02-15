@@ -8,20 +8,17 @@ from pathlib import Path
 
 __version__ = version("imessage_email_alert")
 
+"""
+Send an iMessage alert every time a message comes in to gmail.
+The way I set this up is that for every message that I get im my email that
+I care about, I send a copy to dummy gmail account. This program retrieves the
+message from the dummy gmail account, sends it via iMessage, and then deletes it.
+
+https://developers.google.com/drive/api/quickstart/python will provide
+information on how to create your credentials
+"""
+
 config_directory: Path = Path.home() / ".config" / "imessage_email_alert"
-
-
-def process_messages(
-    phone_number: str,
-    credential_files: str = None,
-    token_file: str = None,
-    log_dir: str = None,
-    debug: bool = False,
-):
-    imessage_alert = iMessageEmailAlert(
-        phone_number, credential_files, token_file, log_dir, debug
-    )
-    imessage_alert.process_messages()
 
 
 @click.command()

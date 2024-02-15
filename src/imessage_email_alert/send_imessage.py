@@ -4,8 +4,17 @@ import subprocess
 
 
 class SendImessage:
-    def __init__(self, phone_number: str):
-        self.phone_number = phone_number
+    """
+    Using applescript on a local machine running messages, send a message
+    """
+
+    def __init__(self, buddy: str) -> None:
+        """
+        Buddy can be either a phone number with countrycode (eg +12125551212) or an
+        email address registered with iMessage
+        """
+
+        self.buddy = buddy
         self.applescript_file = os.path.join(
             os.path.dirname(sys.modules[__name__].__file__), "messageTexter.applescript"
         )
@@ -19,7 +28,7 @@ class SendImessage:
             [
                 "osascript",
                 self.applescript_file,
-                self.phone_number,
+                self.buddy,
                 message,
             ]
         )

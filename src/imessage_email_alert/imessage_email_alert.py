@@ -19,6 +19,9 @@ class iMessageEmailAlert:
     The way I set this up is that for every message that I get im my email that
     I care about, I send a copy to dummy gmail account. This program retrieves the
     message from the dummy gmail account, sends it via iMessage, and then deletes it.
+
+    https://developers.google.com/drive/api/quickstart/python will provide
+    information on how to create your email credentials
     """
 
     # The max lengh of the iMessage

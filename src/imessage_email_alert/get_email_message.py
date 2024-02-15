@@ -14,6 +14,8 @@ from googleapiclient.discovery import build
 
 @dataclass
 class EmailMessage:
+    """Data class to represent an email message"""
+
     from_email: str = field(default_factory=str)
     to_email: str = field(default_factory=str)
     subject: str = field(default_factory=str)
@@ -22,8 +24,10 @@ class EmailMessage:
 
 
 class DeleteError(Exception):
+    """Custom exception for when an error occurs deleting a message"""
+
     def __init__(
-        self, message_id: str, message: str = "Failed to delete email " "message"
+        self, message_id: str, message: str = "Failed to delete email message"
     ):
         self.message_id = message_id
         self.message = message
@@ -62,6 +66,9 @@ class GetEmailMessage:
         self.credentials = self._authorize()
 
     def get_next_message(self) -> Optional[EmailMessage]:
+        """
+        Retrieve the next email message
+        """
         # create a gmail service object
         service = build("gmail", "v1", credentials=self.credentials)
 
@@ -70,6 +77,7 @@ class GetEmailMessage:
         messages = results.get("messages", [])
 
         if not messages:
+            # If there are no messages available, just return
             return
 
         message_id = messages[0]["id"]
@@ -90,6 +98,9 @@ class GetEmailMessage:
         result.from_email = headers.get("From")
         result.to_email = headers.get("To")
         result.subject = headers.get("Subject")
+
+        # This next section is responsible for decoding the message, be it plain
+        # text, or html.
 
         message_main_type = mime_type.split("/")[0]
 
