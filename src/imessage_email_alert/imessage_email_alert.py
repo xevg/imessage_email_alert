@@ -121,16 +121,21 @@ class iMessageEmailAlert:
         # Once I have the gmail connection successfully, start grabbing messages and
         # processing them.
 
+        error_count = 0
         while True:
             try:
                 message = self.gmail.get_next_message()
             except Exception as error:
-                # If an error occurs, wait a while and try again
-                error_string = f"An error occurred trying to get mail:" f" {error}"
-                self.imessage.send_message(error_string)
-                self.logger.error(error_string)
-                ic(error_string)
-                time.sleep(60 * 10)  # 10 minutes so I don't flood the texts overnight
+                error_count += 1
+                if error_count > 20:
+                    # If an error occurs, wait a while and try again
+                    error_string = (
+                        f"{error_count} errors occurred trying to get mail: {error}"
+                    )
+                    self.imessage.send_message(error_string)
+                    self.logger.error(error_string)
+                    ic(error_string)
+                    error_count = 0
                 continue
 
             if message:
