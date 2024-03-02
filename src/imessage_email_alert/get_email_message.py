@@ -149,31 +149,28 @@ class GetEmailMessage:
                 match part_mime_type:
                     case "text/plain":
                         if part["body"].get("date") is not None:
-                            if part["body"]["data"] != "Unreadable message":
-                                decoded_data = base64.urlsafe_b64decode(
-                                    part["body"]["data"]
-                                ).decode("utf-8")
-                                text = decoded_data
+                            decoded_data = base64.urlsafe_b64decode(
+                                part["body"]["data"]
+                            ).decode("utf-8")
+                            text = decoded_data
 
                     case "text/html":
                         if part["body"].get("date") is not None:
-                            if part["body"]["data"] != "Unreadable message":
-                                decoded_data = base64.urlsafe_b64decode(
-                                    part["body"]["data"]
-                                ).decode("utf-8")
-                                soup = BeautifulSoup(decoded_data, "html.parser")
-                                html_text = soup.get_text()
+                            decoded_data = base64.urlsafe_b64decode(
+                                part["body"]["data"]
+                            ).decode("utf-8")
+                            soup = BeautifulSoup(decoded_data, "html.parser")
+                            html_text = soup.get_text()
 
                     case "text":
                         if part["body"].get("date") is not None:
-                            if part["body"]["data"] != "Unreadable message":
-                                decoded_data = base64.urlsafe_b64decode(
-                                    part["body"]["data"]
-                                ).decode("utf-8")
-                                text = decoded_data
-                                if decoded_data.startswith("<!DOCTYPE"):
-                                    soup = BeautifulSoup(decoded_data, "html.parser")
-                                    text = soup.get_text()
+                            decoded_data = base64.urlsafe_b64decode(
+                                part["body"]["data"]
+                            ).decode("utf-8")
+                            text = decoded_data
+                            if decoded_data.startswith("<!DOCTYPE"):
+                                soup = BeautifulSoup(decoded_data, "html.parser")
+                                text = soup.get_text()
                 pass
         return text, html_text
 
