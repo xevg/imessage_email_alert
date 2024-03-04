@@ -148,14 +148,14 @@ class GetEmailMessage:
 
                 match part_mime_type:
                     case "text/plain":
-                        if part["body"].get("date") is not None:
+                        if part["body"].get("data") is not None:
                             decoded_data = base64.urlsafe_b64decode(
                                 part["body"]["data"]
                             ).decode("utf-8")
                             text = decoded_data
 
                     case "text/html":
-                        if part["body"].get("date") is not None:
+                        if part["body"].get("data") is not None:
                             decoded_data = base64.urlsafe_b64decode(
                                 part["body"]["data"]
                             ).decode("utf-8")
@@ -163,7 +163,7 @@ class GetEmailMessage:
                             html_text = soup.get_text()
 
                     case "text":
-                        if part["body"].get("date") is not None:
+                        if part["body"].get("data") is not None:
                             decoded_data = base64.urlsafe_b64decode(
                                 part["body"]["data"]
                             ).decode("utf-8")
